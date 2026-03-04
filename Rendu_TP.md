@@ -6,3 +6,7 @@
 
 ## 🛠️ Préparation de l'environnement
 
+## 1. Setup de l'environnement
+- Initialisation du dépôt Git.
+- Création de l'arborescence (`src/` et `.github/workflows/`).
+- Ajout des fichiers de l'application vulnérable (`package.json`, `server.js`, `Dockerfile`).
