@@ -62,4 +62,34 @@ Suite à l'analyse des failles, j'ai appliqué les correctifs de sécurité suiv
 ![alt text](image-2.png)
 
 ## Conclusion
-Après le commit de ces corrections (`fix: Apply all security fixes`), le pipeline DevSecOps s'est exécuté avec succès. **Tous les jobs de sécurité (SAST, SCA, Secrets, Container Scan) sont passés au vert ! ✅**
+Après le commit de ces corrections (`fix: Apply all security fixes`), et la résolution d'un léger oubli dans le DOCKERFILE (instalation de npm), le pipeline DevSecOps s'est exécuté avec succès. **Tous les jobs de sécurité (SAST, SCA, Secrets, Container Scan) sont passés au vert ! ✅**
+
+![alt text](image-5.png)
+
+# BONUS 
+## Section 5 : Tests DAST (Analyse Dynamique) et Résolution des Pièges
+Pour aller plus loin dans la démarche DevSecOps, j'ai implémenté une étape de DAST (Dynamic Application Security Testing) à l'aide de **OWASP ZAP**. 
+- Le pipeline télécharge l'artefact de l'image Docker fraîchement buildée.
+- Il instancie le conteneur localement sur le runner GitHub (`localhost:3000`).
+- L'outil OWASP ZAP lance ensuite une série d'attaques automatisées sur l'application en cours d'exécution pour détecter des vulnérabilités invisibles lors de l'analyse statique.
+
+Lors de cette intégration, j'ai dû identifier et corriger deux "pièges" techniques subtils pour que le pipeline fonctionne :
+
+### 1. Le piège de la version obsolète (Erreur d'Artifact)
+- **Le problème :** L'action fournie initialement (`zaproxy/action-baseline@v0.10.0`) utilisait un moteur de téléchargement d'artefacts déprécié par GitHub, ce qui faisait planter le job à la toute fin avec le message `Create Artifact Container failed: The artifact name zap_scan is not valid`.
+- **La correction :** J'ai "bumpé" (mis à jour) l'action vers la version récente **`v0.15.0`** pour assurer la compatibilité avec l'infrastructure actuelle de GitHub Actions.
+
+![alt text](image-7.png)
+
+### 2. Le piège du crash silencieux (Erreur Connection Refused)
+- **Le problème :** Lors du premier scan, OWASP ZAP affichait une erreur `Connection refused`. En investiguant, j'ai compris que le conteneur crashait immédiatement au démarrage. En effet, la sécurisation du code (Section 4) exige la présence de `JWT_SECRET` pour démarrer (via `process.exit(1)`).
+- **La correction :** J'ai modifié l'étape de lancement (`docker run`) dans le job DAST pour injecter dynamiquement les variables d'environnement (`JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`) récupérées depuis les secrets cryptés de GitHub.
+
+![alt text](image-6.png)
+
+### 🏆 Résultat final
+Grâce à ces ajustements, l'application Docker s'est lancée correctement avec ses secrets, le robot a pu l'attaquer en conditions réelles, et le scan DAST a confirmé la robustesse de l'API face aux attaques courantes.
+
+**Bilan : Le pipeline entier (Build, SAST, SCA, Secrets, Container Scan, et DAST) est désormais 100% fonctionnel et validé avec succès (Tout est au vert ! ✅)**.
+
+![alt text](image-8.png)
