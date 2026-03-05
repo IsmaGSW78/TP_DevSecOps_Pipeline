@@ -137,10 +137,18 @@ jobs:
           name: docker-image
       
       - name: Load and run app
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_USER: ${{ secrets.ADMIN_USER }}
+          ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
         run: |
           docker load < image.tar
-          docker run -d -p 3000:3000 --name app vuln-app:${{ github.sha }}
-          sleep 5      
+          docker run -d -p 3000:3000 \
+            -e JWT_SECRET="$JWT_SECRET" \
+            -e ADMIN_USER="$ADMIN_USER" \
+            -e ADMIN_PASS="$ADMIN_PASS" \
+            --name app vuln-app:${{ github.sha }}
+          sleep 5    
       - name: OWASP ZAP Baseline
         uses: zaproxy/action-baseline@v0.15.0
         with:
