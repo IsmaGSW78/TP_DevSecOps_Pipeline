@@ -236,3 +236,42 @@ jobs:
           else
             echo "✅ All security checks passed" >> $GITHUB_STEP_SUMMARY
           fi
+
+  # ═══════════════════════════════════════
+  # EXERCICE 3 : CodeQL (SAST Avancé)
+  # ═══════════════════════════════════════
+  codeql:
+    name: 🔍 CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ═══════════════════════════════════════
+  # EXERCICE 4 : Security Gate (Blocage)
+  # ═══════════════════════════════════════
+  security-gate:
+    name: 🚦 Security Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [sast, sca, container-scan]
+    steps:
+      - name: Check results
+        run: |
+          echo "Vérification des résultats des scans précédents..."
+          if [[ "${{ needs.sast.result }}" == "failure" ]] || [[ "${{ needs.sca.result }}" == "failure" ]] || [[ "${{ needs.container-scan.result }}" == "failure" ]]; then
+            echo "❌ VULNÉRABILITÉS CRITIQUES TROUVÉES ! Le merge est bloqué."
+            exit 1
+          else
+            echo "✅ No critical vulnerabilities. Pipeline is clean."
+          fi

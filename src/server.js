@@ -67,4 +67,14 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// 🛑 EXERCICE 1 : Fausse route vulnérable à l'injection SQL
+const db = { query: (sql) => console.log("Executing:", sql) }; // Faux connecteur DB
+app.get('/api/users', (req, res) => {
+  const userId = req.query.id;
+  // Concaténation dangereuse (Injection SQL classique)
+  const sqlQuery = "SELECT * FROM users WHERE id = '" + userId + "'";
+  db.query(sqlQuery);
+  res.send("Query executed");
+});
+
 app.listen(3000, () => console.log('✅ Secure server running'));
