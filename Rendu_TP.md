@@ -113,7 +113,39 @@ J'ai ajouté un job exécutant **CodeQL**, le moteur d'analyse sémantique de co
 
 ![alt text](image-11.png)
 
+**🚧 Résolution d'erreur (Gestion des permissions) :**
+Lors de la première exécution de CodeQL, le job a échoué à la dernière étape avec l'erreur `Resource not accessible by integration`. 
+- **Analyse :** J'ai identifié que le token par défaut de GitHub Actions n'a que des droits de lecture sur le dépôt. Il ne possède pas les autorisations nécessaires pour publier le rapport de vulnérabilités généré vers l'onglet "Security" de GitHub.
+- **Correction :** Pour appliquer le principe de moindre privilège, j'ai déclaré explicitement le bloc de `permissions` requis tout en haut de mon workflow `security.yml` afin d'autoriser l'écriture des alertes :
+
+![alt text](image-13.png)
+
+
 ### Exercice 4 : Mise en place d'une Security Gate
 J'ai créé un job `🚦 Security Gate` agissant comme un point de contrôle strict. Ce script conditionnel vérifie le statut des jobs précédents (`needs: [sast, sca, container-scan]`). Si l'un de ces jobs échoue (comme ce fut le cas avec notre injection SQL de l'exercice 1), la gate effectue un `exit 1`, bloquant ainsi techniquement toute possibilité de "Merge".
 
 ![alt text](image-12.png)
+
+---
+
+## ✅ Checklist Finale Validée
+
+Avant la livraison de ce projet, l'ensemble des prérequis de sécurité a été vérifié et validé :
+- [X] Le pipeline CI/CD s'exécute intégralement sans erreur (tous les jobs sont au vert).
+- [X] Aucun secret n'est présent dans le code source (utilisation exclusive de GitHub Secrets et de variables d'environnement).
+- [X] Les dépendances Node.js sont à jour et exemptes de vulnérabilités connues (CVE).
+- [X] L'image Docker est durcie (utilisation d'une image de base `alpine` allégée, exécution via un utilisateur non-root `nodejs`, implémentation d'un `HEALTHCHECK`).
+- [X] Le fichier `.gitignore` est configuré pour exclure le fichier `.env`.
+- [X] Le dépôt dispose d'un `README.md` documenté, incluant le badge dynamique du statut de build.
+- [X] L'ensemble des tests de sécurité (SAST, SCA, Secrets, Container Scan, DAST, CodeQL) passe avec succès la `Security Gate`.
+
+## 🎯 Conclusion Générale
+
+Ce TP m'a permis de mettre en pratique concrètement l'approche **DevSecOps** (Shift-Left Security). En partant d'une application Node.js volontairement vulnérable et mal configurée, j'ai pu :
+1. **Auditer** le code et l'infrastructure de manière automatisée grâce à des outils standards de l'industrie (Semgrep, npm audit, Gitleaks, Trivy, OWASP ZAP, CodeQL).
+2. **Remédier** aux failles identifiées (mise à jour des dépendances, durcissement du conteneur, obfuscation des secrets, sécurisation des en-têtes HTTP avec Helmet).
+3. **Automatiser** le contrôle continu via un pipeline GitHub Actions complet, incluant une "Security Gate" capable de bloquer tout déploiement en cas de régression ou de nouvelle vulnérabilité critique.
+
+Cette infrastructure CI/CD garantit désormais que chaque modification de code est testée, scannée et validée avant d'atteindre la production, assurant ainsi un haut niveau de sécurité "by design".
+
+![alt text](image-14.png)

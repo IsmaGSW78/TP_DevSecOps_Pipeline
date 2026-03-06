@@ -67,17 +67,18 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// 🛑 EXERCICE 1 : Vraie faille d'injection SQL détectable
-const sqlite3 = require('sqlite3');
+// 🛑 EXERCICE 1 : Vraie faille d'injection SQL
+const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(':memory:');
 
 app.get('/api/users', (req, res) => {
-  const userId = req.query.id; // Entrée utilisateur non filtrée
+  const userId = req.query.id; 
   
-  // Concaténation dangereuse reconnue par Semgrep (OWASP Top 10)
+  // Concaténation classique (La signature exacte que le SAST recherche)
   const sqlQuery = "SELECT * FROM users WHERE id = '" + userId + "'";
   
   db.all(sqlQuery, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
