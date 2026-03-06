@@ -67,14 +67,19 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// 🛑 EXERCICE 1 : Fausse route vulnérable à l'injection SQL
-const db = { query: (sql) => console.log("Executing:", sql) }; // Faux connecteur DB
+// 🛑 EXERCICE 1 : Vraie faille d'injection SQL détectable
+const sqlite3 = require('sqlite3');
+const db = new sqlite3.Database(':memory:');
+
 app.get('/api/users', (req, res) => {
-  const userId = req.query.id;
-  // Concaténation dangereuse (Injection SQL classique)
+  const userId = req.query.id; // Entrée utilisateur non filtrée
+  
+  // Concaténation dangereuse reconnue par Semgrep (OWASP Top 10)
   const sqlQuery = "SELECT * FROM users WHERE id = '" + userId + "'";
-  db.query(sqlQuery);
-  res.send("Query executed");
+  
+  db.all(sqlQuery, (err, rows) => {
+    res.json(rows);
+  });
 });
 
 app.listen(3000, () => console.log('✅ Secure server running'));
