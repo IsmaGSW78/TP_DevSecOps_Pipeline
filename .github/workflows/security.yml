@@ -2,6 +2,12 @@ name: DevSecOps Pipeline
 
 on: [push, pull_request]
 
+# ✅ Ajout des permissions pour autoriser CodeQL à envoyer ses alertes
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
   # ═══════════════════════════════════════
   # 1. BUILD
