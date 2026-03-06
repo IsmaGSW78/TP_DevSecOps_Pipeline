@@ -93,3 +93,27 @@ Grâce à ces ajustements, l'application Docker s'est lancée correctement avec 
 **Bilan : Le pipeline entier (Build, SAST, SCA, Secrets, Container Scan, et DAST) est désormais 100% fonctionnel et validé avec succès (Tout est au vert ! ✅)**.
 
 ![alt text](image-8.png)
+
+## Section 6 : Exercices Pratiques
+
+Pour finaliser ce projet, j'ai mis en place les 4 exercices demandés afin d'éprouver le pipeline :
+
+### Exercice 1 : Test de détection (Injection SQL)
+J'ai volontairement injecté une faille SQL classique (`SELECT * FROM users WHERE id = '... + userId`) dans `server.js`. L'objectif était de valider l'efficacité de nos outils d'analyse statique. Le job SAST a immédiatement détecté la faille et a fait échouer le pipeline.
+
+![alt text](image-9.png)
+
+### Exercice 2 : Badge de sécurité
+J'ai créé un fichier `README.md` intégrant le badge dynamique du workflow GitHub Actions, permettant d'afficher l'état de santé du projet directement sur la page d'accueil du dépôt.
+
+![alt text](image-10.png)
+
+### Exercice 3 : Intégration de GitHub CodeQL
+J'ai ajouté un job exécutant **CodeQL**, le moteur d'analyse sémantique de code de GitHub, configuré spécifiquement pour analyser le langage JavaScript. Cela ajoute une couche de détection de vulnérabilités très avancée.
+
+![alt text](image-11.png)
+
+### Exercice 4 : Mise en place d'une Security Gate
+J'ai créé un job `🚦 Security Gate` agissant comme un point de contrôle strict. Ce script conditionnel vérifie le statut des jobs précédents (`needs: [sast, sca, container-scan]`). Si l'un de ces jobs échoue (comme ce fut le cas avec notre injection SQL de l'exercice 1), la gate effectue un `exit 1`, bloquant ainsi techniquement toute possibilité de "Merge".
+
+![alt text](image-12.png)
