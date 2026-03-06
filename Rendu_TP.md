@@ -11,7 +11,7 @@
 - Création de l'application Node.js vulnérable (`server.js`, `package.json`, `Dockerfile`).
 - **🛡️ Fait marquant DevSecOps :** Lors du tout premier `git push`, la protection native de GitHub (*Secret Scanning Push Protection*) a bloqué l'envoi. Le scanneur a immédiatement détecté les clés d'API en clair (Stripe, SendGrid) dans le fichier `server.js`. J'ai dû autoriser manuellement ce push (ou modifier légèrement les clés) pour poursuivre le TP. Cela prouve l'efficacité du blocage en amont !
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 ## Section 2 : Création du Pipeline DevSecOps
 - Mise en place du workflow GitHub Actions via le fichier `.github/workflows/security.yml`.
@@ -24,7 +24,7 @@
 ## Section 3 : Analyse des résultats (État initial)
 Comme attendu, le premier lancement du pipeline s'est soldé par un échec général. Les rapports JSON ont été récupérés via les *Artifacts* de GitHub Actions. 
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 Voici le bilan des vulnérabilités détectées :
 
@@ -42,7 +42,7 @@ Suite à l'analyse des failles, j'ai appliqué les correctifs de sécurité suiv
 - Mise à jour des librairies obsolètes (`express`, `jsonwebtoken`) vers des versions sécurisées.
 - Ajout d'outils de sécurité standards : `helmet` (sécurité des en-têtes HTTP), `express-rate-limit` (protection contre le brute-force) et `express-validator` (validation des entrées).
 
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 ### 2. Sécurisation du code (SAST & Secrets)
 - Suppression stricte des secrets hardcodés (clés Stripe, SendGrid, DB) remplacés par l'utilisation de variables d'environnement (`process.env`) via la librairie `dotenv`.
@@ -54,17 +54,17 @@ Suite à l'analyse des failles, j'ai appliqué les correctifs de sécurité suiv
 - Création et utilisation d'un utilisateur non-root (`nodejs` avec l'ID 1001) pour appliquer le principe de moindre privilège dans le conteneur.
 - Ajout d'une directive `HEALTHCHECK` pour surveiller l'état de santé du conteneur.
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 ### 4. Gestion sécurisée de la CI/CD
 - Configuration des secrets de production (`JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`) directement dans l'interface sécurisée de GitHub (*Settings > Secrets and variables > Actions*) afin que le pipeline puisse tester l'application sans exposer les clés.
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 ## Conclusion
 Après le commit de ces corrections (`fix: Apply all security fixes`), et la résolution d'un léger oubli dans le DOCKERFILE (instalation de npm), le pipeline DevSecOps s'est exécuté avec succès. **Tous les jobs de sécurité (SAST, SCA, Secrets, Container Scan) sont passés au vert ! ✅**
 
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 # BONUS 
 ## Section 5 : Tests DAST (Analyse Dynamique) et Résolution des Pièges
@@ -79,20 +79,20 @@ Lors de cette intégration, j'ai dû identifier et corriger deux "pièges" techn
 - **Le problème :** L'action fournie initialement (`zaproxy/action-baseline@v0.10.0`) utilisait un moteur de téléchargement d'artefacts déprécié par GitHub, ce qui faisait planter le job à la toute fin avec le message `Create Artifact Container failed: The artifact name zap_scan is not valid`.
 - **La correction :** J'ai "bumpé" (mis à jour) l'action vers la version récente **`v0.15.0`** pour assurer la compatibilité avec l'infrastructure actuelle de GitHub Actions.
 
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 
 ### 2. Le piège du crash silencieux (Erreur Connection Refused)
 - **Le problème :** Lors du premier scan, OWASP ZAP affichait une erreur `Connection refused`. En investiguant, j'ai compris que le conteneur crashait immédiatement au démarrage. En effet, la sécurisation du code (Section 4) exige la présence de `JWT_SECRET` pour démarrer (via `process.exit(1)`).
 - **La correction :** J'ai modifié l'étape de lancement (`docker run`) dans le job DAST pour injecter dynamiquement les variables d'environnement (`JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`) récupérées depuis les secrets cryptés de GitHub.
 
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 
 ### 🏆 Résultat final
 Grâce à ces ajustements, l'application Docker s'est lancée correctement avec ses secrets, le robot a pu l'attaquer en conditions réelles, et le scan DAST a confirmé la robustesse de l'API face aux attaques courantes.
 
 **Bilan : Le pipeline entier (Build, SAST, SCA, Secrets, Container Scan, et DAST) est désormais 100% fonctionnel et validé avec succès (Tout est au vert ! ✅)**.
 
-![alt text](image-8.png)
+![alt text](images/image-8.png)
 
 ## Section 6 : Exercices Pratiques
 
@@ -101,30 +101,30 @@ Pour finaliser ce projet, j'ai mis en place les 4 exercices demandés afin d'ép
 ### Exercice 1 : Test de détection (Injection SQL)
 J'ai volontairement injecté une faille SQL classique (`SELECT * FROM users WHERE id = '... + userId`) dans `server.js`. L'objectif était de valider l'efficacité de nos outils d'analyse statique. Le job SAST a immédiatement détecté la faille et a fait échouer le pipeline.
 
-![alt text](image-9.png)
+![alt text](images/image-9.png)
 
 ### Exercice 2 : Badge de sécurité
 J'ai créé un fichier `README.md` intégrant le badge dynamique du workflow GitHub Actions, permettant d'afficher l'état de santé du projet directement sur la page d'accueil du dépôt.
 
-![alt text](image-10.png)
+![alt text](images/image-10.png)
 
 ### Exercice 3 : Intégration de GitHub CodeQL
 J'ai ajouté un job exécutant **CodeQL**, le moteur d'analyse sémantique de code de GitHub, configuré spécifiquement pour analyser le langage JavaScript. Cela ajoute une couche de détection de vulnérabilités très avancée.
 
-![alt text](image-11.png)
+![alt text](images/image-11.png)
 
 **🚧 Résolution d'erreur (Gestion des permissions) :**
 Lors de la première exécution de CodeQL, le job a échoué à la dernière étape avec l'erreur `Resource not accessible by integration`. 
 - **Analyse :** J'ai identifié que le token par défaut de GitHub Actions n'a que des droits de lecture sur le dépôt. Il ne possède pas les autorisations nécessaires pour publier le rapport de vulnérabilités généré vers l'onglet "Security" de GitHub.
 - **Correction :** Pour appliquer le principe de moindre privilège, j'ai déclaré explicitement le bloc de `permissions` requis tout en haut de mon workflow `security.yml` afin d'autoriser l'écriture des alertes :
 
-![alt text](image-13.png)
+![alt text](images/image-13.png)
 
 
 ### Exercice 4 : Mise en place d'une Security Gate
 J'ai créé un job `🚦 Security Gate` agissant comme un point de contrôle strict. Ce script conditionnel vérifie le statut des jobs précédents (`needs: [sast, sca, container-scan]`). Si l'un de ces jobs échoue (comme ce fut le cas avec notre injection SQL de l'exercice 1), la gate effectue un `exit 1`, bloquant ainsi techniquement toute possibilité de "Merge".
 
-![alt text](image-12.png)
+![alt text](images/image-12.png)
 
 ---
 
@@ -148,4 +148,4 @@ Ce TP m'a permis de mettre en pratique concrètement l'approche **DevSecOps** (S
 
 Cette infrastructure CI/CD garantit désormais que chaque modification de code est testée, scannée et validée avant d'atteindre la production, assurant ainsi un haut niveau de sécurité "by design".
 
-![alt text](image-14.png)
+![alt text](images/image-14.png)
